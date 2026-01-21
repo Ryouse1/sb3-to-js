@@ -2,12 +2,11 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>sb3 → project.js デバッグ版</title>
+<title>sb3 → project.js デバッグ版（文字ログ付き）</title>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <style>
 body { font-family: sans-serif; padding: 20px; }
-textarea { width: 100%; height: 200px; margin-top: 10px; }
-#log { white-space: pre-wrap; background:#eee; padding:10px; margin-top:10px; height:150px; overflow:auto; }
+textarea { width: 100%; height: 250px; margin-top: 10px; }
 button { padding: 10px 20px; margin:5px 0; }
 </style>
 </head>
@@ -18,22 +17,21 @@ button { padding: 10px 20px; margin:5px 0; }
 <input type="file" id="file" accept=".sb3"><br>
 <button id="convertBtn">変換</button>
 
-<h3>ログ</h3>
-<div id="log"></div>
-
-<h3>出力</h3>
+<h3>出力（JS & ログ）</h3>
 <textarea id="output"></textarea>
 
 <script>
-const logDiv = document.getElementById('log');
 const output = document.getElementById('output');
+let logText = "";
 
 function log(msg) {
   console.log(msg);
-  logDiv.textContent += msg + "\n";
+  logText += msg + "\n";
+  output.value = logText;
 }
 
 document.getElementById('convertBtn').addEventListener('click', async () => {
+  logText = ""; // 変換ごとにクリア
   log("=== 変換開始 ===");
 
   const file = document.getElementById('file').files[0];
@@ -66,8 +64,10 @@ const project = ${JSON.stringify(json, null, 2)};
 
 export default project;
 `;
-    output.value = js;
     log("変換完了 ✅");
+    log("=== 出力 JS 開始 ===");
+    log(js.substring(0, 500) + (js.length > 500 ? "\n...（省略）" : "")); // 長すぎる場合は一部表示
+    log("=== 出力 JS 終了 ===");
 
   } catch (e) {
     log("変換中にエラー: " + e.message);
