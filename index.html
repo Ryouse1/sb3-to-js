@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>sb3 → project.js 完全版</title>
+<title>sb3 → project.js 完全版（Chrome限定）</title>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <style>
 body { font-family: sans-serif; padding: 20px; }
@@ -13,7 +13,7 @@ button { padding: 10px 20px; margin: 5px 5px 10px 0; }
 </head>
 <body>
 
-<h2>Scratch sb3 → project.js 完全版</h2>
+<h2>Scratch sb3 → project.js（Chrome限定）</h2>
 
 <input type="file" id="file" accept=".sb3"><br><br>
 <button id="convertBtn">変換</button>
@@ -31,6 +31,19 @@ function log(msg) {
   logText += msg + "\n";
   logDiv.textContent = logText;
   console.log(msg);
+}
+
+// Chrome判定
+function isChrome() {
+  const ua = navigator.userAgent;
+  return /Chrome/.test(ua) && !/Edg|OPR|Brave/.test(ua);
+}
+
+// Chrome以外は弾く
+if (!isChrome()) {
+  alert("⚠ このツールは Chrome 専用です。他のブラウザでは動作しません。");
+  document.getElementById('convertBtn').disabled = true;
+  document.getElementById('downloadBtn').disabled = true;
 }
 
 document.getElementById('convertBtn').addEventListener('click', async () => {
@@ -78,19 +91,31 @@ export default project;
   }
 });
 
-document.getElementById('downloadBtn').addEventListener('click', () => {
+document.getElementById('downloadBtn').addEventListener('click', async () => {
   if (!outputJS) {
     alert("まず変換してください");
     return;
   }
-  const blob = new Blob([outputJS], { type: "text/javascript" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "project.js";
-  a.click();
-  URL.revokeObjectURL(url);
-  log("project.js を保存しました ✅");
+
+  try {
+    // ZIP にして保存（大容量対応）
+    const zipDL = new JSZip();
+    zipDL.file("project.js", outputJS);
+    const blob = await zipDL.generateAsync({ type: "blob" });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "project.zip";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    log("project.zip を保存しました ✅");
+  } catch (e) {
+    log("DL 失敗: " + e.message);
+    alert("DL 失敗: " + e.message);
+  }
 });
 </script>
 
