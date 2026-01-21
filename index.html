@@ -2,36 +2,40 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>sb3 → project.js デバッグ版（文字ログ付き）</title>
+<title>sb3 → project.js 完全版</title>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <style>
 body { font-family: sans-serif; padding: 20px; }
-textarea { width: 100%; height: 250px; margin-top: 10px; }
-button { padding: 10px 20px; margin:5px 0; }
+textarea { width: 100%; height: 200px; margin-top: 10px; }
+button { padding: 10px 20px; margin: 5px 5px 10px 0; }
+#log { white-space: pre-wrap; background:#eee; padding:10px; margin-top:10px; height:150px; overflow:auto; }
 </style>
 </head>
 <body>
 
-<h2>Scratch sb3 → project.js デバッグ版</h2>
+<h2>Scratch sb3 → project.js 完全版</h2>
 
-<input type="file" id="file" accept=".sb3"><br>
+<input type="file" id="file" accept=".sb3"><br><br>
 <button id="convertBtn">変換</button>
+<button id="downloadBtn">project.js を保存</button>
 
-<h3>出力（JS & ログ）</h3>
-<textarea id="output"></textarea>
+<h3>ログ</h3>
+<div id="log"></div>
 
 <script>
-const output = document.getElementById('output');
+const logDiv = document.getElementById('log');
+let outputJS = "";
 let logText = "";
 
 function log(msg) {
-  console.log(msg);
   logText += msg + "\n";
-  output.value = logText;
+  logDiv.textContent = logText;
+  console.log(msg);
 }
 
 document.getElementById('convertBtn').addEventListener('click', async () => {
-  logText = ""; // 変換ごとにクリア
+  logText = "";
+  outputJS = "";
   log("=== 変換開始 ===");
 
   const file = document.getElementById('file').files[0];
@@ -59,20 +63,34 @@ document.getElementById('convertBtn').addEventListener('click', async () => {
     const json = JSON.parse(projText);
     log("JSON パース完了");
 
-    const js = `// Auto-generated from Scratch sb3
+    outputJS = `// Auto-generated from Scratch sb3
 const project = ${JSON.stringify(json, null, 2)};
 
 export default project;
 `;
+
     log("変換完了 ✅");
-    log("=== 出力 JS 開始 ===");
-    log(js.substring(0, 500) + (js.length > 500 ? "\n...（省略）" : "")); // 長すぎる場合は一部表示
-    log("=== 出力 JS 終了 ===");
+    log("✅ これで project.js を保存できます（下のボタン）");
 
   } catch (e) {
     log("変換中にエラー: " + e.message);
     console.error(e);
   }
+});
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  if (!outputJS) {
+    alert("まず変換してください");
+    return;
+  }
+  const blob = new Blob([outputJS], { type: "text/javascript" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "project.js";
+  a.click();
+  URL.revokeObjectURL(url);
+  log("project.js を保存しました ✅");
 });
 </script>
 
